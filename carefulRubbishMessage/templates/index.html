@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>垃圾短信分类系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#10b981',
+                        danger: '#ef4444',
+                        warning: '#f59e0b',
+                        neutral: '#64748b'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .card-shadow {
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            }
+            .btn-hover {
+                transition: all 0.3s ease;
+            }
+            .btn-hover:hover {
+                transform: translateY(-2px);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <!-- 导航栏 -->
+    <nav class="bg-primary text-white shadow-md">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold flex items-center">
+                <i class="fa fa-shield mr-2"></i>
+                垃圾短信分类系统
+            </h1>
+            <div class="flex items-center space-x-4">
+                <a href="#classify" class="hover:text-gray-200 transition-colors">分类</a>
+                <a href="#evaluation" class="hover:text-gray-200 transition-colors">模型评估</a>
+                <a href="#about" class="hover:text-gray-200 transition-colors">关于</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <!-- 分类部分 -->
+        <section id="classify" class="mb-12">
+            <div class="bg-white rounded-xl p-6 md:p-8 card-shadow">
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fa fa-comment-o text-primary mr-2"></i>
+                    短信分类
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- 左侧：输入区域 -->
+                    <div class="md:col-span-2 space-y-6">
+                        <div>
+                            <label for="sms-text" class="block text-sm font-medium text-gray-700 mb-2">
+                                输入短信内容
+                            </label>
+                            <textarea id="sms-text" rows="6" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all" placeholder="请输入要分析的短信内容..."></textarea>
+                        </div>
+
+                        <div>
+                            <label for="model-select" class="block text-sm font-medium text-gray-700 mb-2">
+                                选择分类模型
+                            </label>
+                            <select id="model-select" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all">
+                                {% for name in model_names %}
+                                <option value="{{ name }}">{{ name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <button id="analyze-btn" class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 px-6 rounded-lg shadow btn-hover flex items-center justify-center">
+                            <i class="fa fa-search mr-2"></i>
+                            分析短信
+                        </button>
+                    </div>
+
+                    <!-- 右侧：结果区域 -->
+                    <div class="bg-gray-50 rounded-lg p-6 flex flex-col justify-center">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-4 text-center">分析结果</h3>
+
+                        <div id="result-container" class="text-center py-8">
+                            <div id="result-icon" class="text-6xl mb-4 text-neutral">
+                                <i class="fa fa-question-circle"></i>
+                            </div>
+                            <p id="result-text" class="text-xl font-bold text-neutral">等待分析...</p>
+                            <p id="confidence-text" class="text-gray-600 mt-2">置信度: --%</p>
+                        </div>
+
+                        <div id="loading-indicator" class="hidden text-center py-8">
+                            <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+                            <p class="mt-4 text-gray-600">分析中，请稍候...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 模型评估部分 -->
+        <section id="evaluation" class="mb-12">
+            <div class="bg-white rounded-xl p-6 md:p-8 card-shadow">
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fa fa-bar-chart text-primary mr-2"></i>
+                    模型评估
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- 模型选择 -->
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-4">选择模型</h3>
+                        <select id="evaluation-model" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all">
+                            {% for name in model_names %}
+                            <option value="{{ name }}">{{ name }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <button id="load-evaluation-btn" class="w-full mt-4 bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded-lg shadow btn-hover">
+                            查看详情
+                        </button>
+                    </div>
+
+                    <!-- 评估结果 -->
+                    <div class="md:col-span-2">
+                        <div id="evaluation-results" class="bg-gray-50 rounded-lg p-6 min-h-[300px]">
+                            <p class="text-gray-600 text-center">请选择一个模型查看详细评估结果</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 模型比较 -->
+                <div class="mt-8">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4">模型比较</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white rounded-lg overflow-hidden">
+                            <thead class="bg-gray-200 text-gray-700">
+                                <tr>
+                                    <th class="py-3 px-4 text-left">模型</th>
+                                    <th class="py-3 px-4 text-left">准确率</th>
+                                    <th class="py-3 px-4 text-left">F1分数</th>
+                                    <th class="py-3 px-4 text-left">最佳参数</th>
+                                </tr>
+                            </thead>
+                            <tbody id="model-comparison">
+                                <!-- 数据将通过JavaScript填充 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 关于部分 -->
+        <section id="about">
+            <div class="bg-white rounded-xl p-6 md:p-8 card-shadow">
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fa fa-info-circle text-primary mr-2"></i>
+                    关于系统
+                </h2>
+
+                <div class="prose max-w-none">
+                    <p>本系统使用机器学习技术对短信进行分类，判断其是否为垃圾短信。</p>
+                    <p>支持的分类模型包括:</p>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li>多项式朴素贝叶斯 (MultinomialNB)</li>
+                        <li>逻辑回归 (Logistic Regression)</li>
+                        <li>支持向量机 (SVM)</li>
+                    </ul>
+                    <p>系统特点:</p>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li>使用TF-IDF进行文本特征提取</li>
+                        <li>支持中文分词和停用词过滤</li>
+                        <li>提供模型选择功能</li>
+                        <li>展示详细的模型评估结果</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-800 text-white py-6">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <h3 class="text-lg font-semibold">垃圾短信分类系统</h3>
+                    <p class="text-gray-400 text-sm">使用机器学习技术识别垃圾短信</p>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fa fa-github text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fa fa-envelope text-xl"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-gray-700 text-center text-gray-400 text-sm">
+                © 2025 清道夫队 版权所有
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 分析短信
+        document.getElementById('analyze-btn').addEventListener('click', async function() {
+            const text = document.getElementById('sms-text').value.trim();
+            const model = document.getElementById('model-select').value;
+
+            if (!text) {
+                alert('请输入短信内容');
+                return;
+            }
+
+            // 显示加载状态
+            document.getElementById('result-container').classList.add('hidden');
+            document.getElementById('loading-indicator').classList.remove('hidden');
+
+            try {
+                // 发送请求
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: new URLSearchParams({
+                        text: text,
+                        model: model
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('请求失败: ' + response.status);
+                }
+
+                const data = await response.json();
+
+                // 更新结果显示
+                const resultText = document.getElementById('result-text');
+                const confidenceText = document.getElementById('confidence-text');
+                const resultIcon = document.getElementById('result-icon');
+
+                resultText.textContent = data.result;
+                confidenceText.textContent = `置信度: ${data.confidence.toFixed(1)}%`;
+
+                // 设置图标和颜色
+                if (data.result === '垃圾短信') {
+                    resultIcon.innerHTML = '<i class="fa fa-exclamation-circle text-danger"></i>';
+                    resultText.className = 'text-xl font-bold text-danger';
+                } else {
+                    resultIcon.innerHTML = '<i class="fa fa-check-circle text-secondary"></i>';
+                    resultText.className = 'text-xl font-bold text-secondary';
+                }
+
+                // 显示结果，隐藏加载
+                document.getElementById('result-container').classList.remove('hidden');
+                document.getElementById('loading-indicator').classList.add('hidden');
+
+            } catch (error) {
+                console.error('分析出错:', error);
+                alert('分析过程中出现错误: ' + error.message);
+                document.getElementById('result-container').classList.remove('hidden');
+                document.getElementById('loading-indicator').classList.add('hidden');
+            }
+        });
+
+        // 加载模型评估结果
+        document.getElementById('load-evaluation-btn').addEventListener('click', async function() {
+            const model = document.getElementById('evaluation-model').value;
+
+            try {
+                // 获取所有模型评估结果
+                const response = await fetch('/evaluation');
+                if (!response.ok) {
+                    throw new Error('请求失败: ' + response.status);
+                }
+
+                const evaluationData = await response.json();
+                const modelData = evaluationData[model];
+
+                if (!modelData) {
+                    throw new Error('找不到模型评估数据');
+                }
+
+                // 格式化评估结果
+                let reportHtml = `
+                    <h4 class="font-semibold text-lg mb-2">${model}</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <p><span class="font-medium">准确率:</span> ${modelData.accuracy.toFixed(4)}</p>
+                            <p><span class="font-medium">F1分数:</span> ${modelData.f1_score.toFixed(4)}</p>
+                        </div>
+                        <div>
+                            <p><span class="font-medium">最佳参数:</span></p>
+                            <pre class="bg-gray-100 p-2 rounded text-sm">${JSON.stringify(modelData.best_params, null, 2)}</pre>
+                        </div>
+                    </div>
+                    <p class="font-medium mb-2">详细分类报告:</p>
+                    <pre class="bg-gray-100 p-3 rounded text-sm overflow-x-auto">${modelData.report}</pre>
+                `;
+
+                document.getElementById('evaluation-results').innerHTML = reportHtml;
+
+                // 更新模型比较表格
+                updateModelComparisonTable(evaluationData);
+
+            } catch (error) {
+                console.error('获取评估结果出错:', error);
+                alert('获取评估结果时出现错误: ' + error.message);
+            }
+        });
+
+        // 更新模型比较表格
+        function updateModelComparisonTable(data) {
+            const tableBody = document.getElementById('model-comparison');
+            tableBody.innerHTML = '';
+
+            for (const modelName in data) {
+                const modelData = data[modelName];
+                const row = document.createElement('tr');
+                row.className = 'border-b border-gray-200 hover:bg-gray-50 transition-colors';
+
+                row.innerHTML = `
+                    <td class="py-3 px-4">${modelName}</td>
+                    <td class="py-3 px-4">${modelData.accuracy.toFixed(4)}</td>
+                    <td class="py-3 px-4">${modelData.f1_score.toFixed(4)}</td>
+                    <td class="py-3 px-4">
+                        <pre class="bg-gray-100 p-2 rounded text-xs">${JSON.stringify(modelData.best_params, null, 2)}</pre>
+                    </td>
+                `;
+
+                tableBody.appendChild(row);
+            }
+        }
+
+        // 页面加载时自动获取评估数据并更新表格
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const response = await fetch('/evaluation');
+                if (response.ok) {
+                    const evaluationData = await response.json();
+                    updateModelComparisonTable(evaluationData);
+                }
+            } catch (error) {
+                console.error('初始化模型比较表格出错:', error);
+            }
+        });
+    </script>
+</body>
+</html>

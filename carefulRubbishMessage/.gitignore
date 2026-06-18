@@ -1,0 +1,74 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+*.env
+
+# Logs
+*.log
+logs/
+
+# Build / package
+build/
+dist/
+*.egg-info/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# NLP datasets
+data/
+datasets/
+corpus/
+
+# Model outputs
+models/
+checkpoints/
+outputs/
+runs/
+results/
+saved_models/
+pretrained/
+weights/
+
+# Common large model files
+*.pt
+*.pth
+*.ckpt
+*.bin
+*.safetensors
+*.onnx
+*.h5
+*.pkl
+*.joblib
+
+# TensorBoard / WandB
+wandb/
+tensorboard/
+events.out.tfevents.*
+
+# Temporary files
+tmp/
+temp/
